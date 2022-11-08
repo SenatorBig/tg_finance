@@ -6,9 +6,9 @@ services:
     ports:
       - 5432:5432
     environment:
-      POSTGRES_DB: releven
-      POSTGRES_USER: releven
-      POSTGRES_PASSWORD: releven
+      POSTGRES_DB: tg_finance
+      POSTGRES_USER: tg_finance
+      POSTGRES_PASSWORD: tg_finance
     volumes:
       - "db:/var/lib/postgresql/data/"
 volumes:
