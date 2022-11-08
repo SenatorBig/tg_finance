@@ -10,5 +10,5 @@ engine = create_engine(DB_URL)
 
 
 # приложение, которое ничего не делает
-app = FastAPI()
+#app = FastAPI()
 

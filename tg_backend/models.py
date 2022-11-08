@@ -1,6 +1,14 @@
-from database import Base
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, DateTime
 from sqlalchemy.orm import relationship
+
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from settings import DB_URL
+
+Base = declarative_base()
+engine = create_engine(DB_URL)
+Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 class User(Base):
