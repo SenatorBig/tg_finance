@@ -1,9 +1,11 @@
 from aiogram import types
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.dispatcher import FSMContext
+
 from loader import dp
-from utils.database import Session, User, Purchase, Category, Store
+from utils.database import Purchase, Category, Store
 from handlers.services.general_states import HandlersMessages
 from handlers.services.keyboards import stores_keyboard, categories_keyboard, menu_keyboard
+from handlers.services.decorators import inject_user_and_session
 
 
 @dp.message_handler(state=HandlersMessages.new_buy)
@@ -13,31 +15,23 @@ async def create_new_purchase(message: types.Message):
 
 
 @dp.message_handler(state=HandlersMessages.add_title)
-async def enter_title_purchase(message: types.Message):
-    session = Session()
-    user = session.query(User).filter_by(chat_id=str(message.from_user.id)).first()
-    purchase = Purchase(title=message.text, user_id=user.id)
-    session.add(purchase)
-    session.commit()
+@inject_user_and_session
+async def enter_title_purchase(message: types.Message, session, user, state: FSMContext):
+    await state.update_data(user_id=user.id, title=message.text)
     await message.answer("Enter the price. Example 99.99")
     await HandlersMessages.add_price.set()
 
 
 @dp.message_handler(state=HandlersMessages.add_price)
-async def enter_price(message: types.Message):
-    session = Session()
-    user = session.query(User).filter_by(chat_id=str(message.from_user.id)).first()
-    purchases = session.query(Purchase).filter_by(user_id=user.id).order_by(Purchase.created_at)
-    if list(purchases):
-        purchase = list(purchases)[-1]
+@inject_user_and_session
+async def enter_price(message: types.Message, session, user, state: FSMContext):
     try:
-        purchase.price = float(message.text)
+        price = float(message.text)
     except ValueError:
         await message.answer("Enter valid price. Example 99.99")
         return
-    session.add(purchase)
-    session.commit()
     categories = session.query(Category).filter_by(user_id=user.id)
+    await state.update_data(price=price)
     await message.answer(
         "Select a product category or create a new one",
         reply_markup=categories_keyboard(categories)
@@ -46,77 +40,78 @@ async def enter_price(message: types.Message):
 
 
 @dp.message_handler(state=HandlersMessages.select_category)
-async def select_category_purchase(message: types.Message):
-    session = Session()
-    user = session.query(User).filter_by(chat_id=str(message.from_user.id)).first()
-    purchases = session.query(Purchase).filter_by(user_id=user.id).order_by(Purchase.created_at)
-    purchase = list(purchases)[-1]
+@inject_user_and_session
+async def select_category_purchase(message: types.Message, session, user, state: FSMContext):
     if message.text == "New category":
         await message.answer("Enter the title of new category")
         await HandlersMessages.create_category.set()
-    category = session.query(Category).filter_by(user_id=user.id, title=message.text).first()
-    purchase.category_id = category.id
-    session.add(purchase)
-    session.commit()
-    stores = session.query(Store).filter_by(user_id=user.id)
-    await message.answer(
-        "Select a category or create a new one",
-        reply_markup=stores_keyboard(stores)
-    )
-    await HandlersMessages.select_store.set()
+    else:
+        stores = session.query(Store).filter_by(user_id=user.id)
+        categories = session.query(Category).filter_by(user_id=user.id)
+        if message.text not in [category.title for category in categories]:
+            await message.answer("Please, select category from keyboard")
+            return
+        await message.answer(
+            "Select a store or create a new one",
+            reply_markup=stores_keyboard(stores)
+        )
+        await state.update_data(category=message.text, new_category=False)
+        await HandlersMessages.select_store.set()
 
 
 @dp.message_handler(state=HandlersMessages.create_category)
-async def create_new_category(message: types.Message):
-    session = Session()
-    user = session.query(User).filter_by(chat_id=str(message.from_user.id)).first()
-    purchases = session.query(Purchase).filter_by(user_id=user.id).order_by(Purchase.created_at)
-    purchase = list(purchases)[-1]
+@inject_user_and_session
+async def create_new_category(message: types.Message, session, user, state: FSMContext):
     category = Category(title=message.text, user_id=user.id)
-    purchase.category_id = category.id
-    session.add(category, purchase)
-    session.commit()
+    session.add(category)
     stores = session.query(Store).filter_by(user_id=user.id)
     await message.answer(
-        "Select a category or create a new one",
+        "Select a store or create a new one",
         reply_markup=stores_keyboard(stores)
     )
+    await state.update_data(category=message.text)
     await HandlersMessages.select_store.set()
 
 
 @dp.message_handler(state=HandlersMessages.select_store)
-async def add_store(message: types.Message):
-    session = Session()
-    user = session.query(User).filter_by(chat_id=str(message.from_user.id)).first()
-    purchases = session.query(Purchase).filter_by(user_id=user.id).order_by(Purchase.created_at)
-    purchase = list(purchases)[-1]
+@inject_user_and_session
+async def add_store(message: types.Message, session, user, state: FSMContext):
     if message.text == "New store":
         await message.answer("Enter the title store")
         await HandlersMessages.create_store.set()
-    store = session.query(Store).filter_by(user_id=user.id, title=message.text).first()
-    purchase.store_id = store.id
-    session.add(purchase)
-    session.commit()
-    category = session.query(Category).filter_by(user_id=user.id, id=purchase.category_id).first()
-    text = f"Title: {purchase.title} \nPrice: {purchase.price} \nCategory: {category.title} \nStore: {store.title}"
-    await message.answer(text)
-    await message.answer("What do you want?", reply_markup=menu_keyboard)
-    await HandlersMessages.menu_select.set()
+    else:
+        stores = session.query(Store).filter_by(user_id=user.id)
+        if message.text not in [store.title for store in stores]:
+            await message.answer("Please, select store from keyboard")
+            return
+        await state.update_data(store=message.text, new_store=False)
+        data = await state.get_data()
+        store = session.query(Store).filter_by(user_id=user.id, title=data["store"]).first()
+        category = session.query(Category).filter_by(user_id=user.id, title=data["category"]).first()
+        purchase = Purchase(
+            title=data["title"], user_id=user.id, price=data["price"], category_id=category.id, store_id=store.id
+        )
+        session.add(purchase)
+        text = f"Title: {data['title']} \nPrice: {data['price']} \nCategory: {data['category']} \nStore: {data['store']}"
+        await message.answer(text)
+        await message.answer("What do you want?", reply_markup=menu_keyboard)
+        await HandlersMessages.menu_select.set()
 
 
 @dp.message_handler(state=HandlersMessages.create_store)
-async def create_new_store(message: types.Message):
-    session = Session()
-    user = session.query(User).filter_by(chat_id=str(message.from_user.id)).first()
-    purchases = session.query(Purchase).filter_by(user_id=user.id).order_by(Purchase.created_at)
-    if list(purchases):
-        purchase = list(purchases)[-1]
+@inject_user_and_session
+async def create_new_store(message: types.Message, session, user, state: FSMContext):
+    await state.update_data(store=message.text, new_store=True)
+    data = await state.get_data()
     store = Store(title=message.text, user_id=user.id)
-    purchase.store_id = store.id
-    session.add(store, purchase)
-    category = session.query(Category).filter_by(user_id=user.id, id=purchase.category_id).first()
+    session.add(store)
     session.commit()
-    text = f"Title: {purchase.title} \nPrice: {purchase.price} \nCategory: {category.title} \nStore: {store.title}"
+    store_id = store.id
+    category = session.query(Category).filter_by(user_id=user.id, title=data["category"]).first()
+    purchase = Purchase(title=data["title"], price=data["price"], category_id=category.id, store_id=store_id)
+    session.add(purchase)
+    session.commit()
+    text = f"Title: {data['title']} \nPrice: {data['price']} \nCategory: {data['category']} \nStore: {data['store']}"
     await message.answer(text)
     await message.answer("What do you want?", reply_markup=menu_keyboard)
     await HandlersMessages.menu_select.set()

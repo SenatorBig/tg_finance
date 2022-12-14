@@ -1,3 +1,3 @@
-from .config import DB_URL
+from .config import DB_URL, API_TOKEN
 
-__all__ = ['DB_URL']
+__all__ = ['DB_URL', 'API_TOKEN']

@@ -7,12 +7,13 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-aiogram = "^2.23.1"
 fastapi = "^0.87.0"
 SQLAlchemy = "^1.4.44"
 alembic = "^1.8.1"
 python-dotenv = "^0.21.0"
 psycopg2-binary = "^2.9.5"
+aiogram = "^2.23.1"
+aioredis = "^2.0.1"
 
 
 [build-system]

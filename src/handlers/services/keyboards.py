@@ -1,4 +1,5 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+import sting_vars
 
 
 def stores_keyboard(stores):
@@ -22,16 +23,13 @@ def categories_keyboard(categories):
 menu_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="1. Cost analysis"),
-            KeyboardButton(text="2. Purchases"),
-            KeyboardButton(text="3. Balance"),
-            KeyboardButton(text="4. Info")
+            KeyboardButton(text=sting_vars.menu_analysis),
+            KeyboardButton(text=sting_vars.menu_purchase),
         ],
     ],
     resize_keyboard=True,
     one_time_keyboard=True
 )
-
 
 answer_keyboard = ReplyKeyboardMarkup(
     keyboard=[
@@ -44,7 +42,6 @@ answer_keyboard = ReplyKeyboardMarkup(
     one_time_keyboard=True
 )
 
-
 currency_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [
@@ -52,7 +49,7 @@ currency_keyboard = ReplyKeyboardMarkup(
             KeyboardButton(text="RUB"),
             KeyboardButton(text="GEL")
         ],
-            ],
+    ],
     resize_keyboard=True,
     one_time_keyboard=True
 )

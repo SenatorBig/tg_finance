@@ -39,9 +39,9 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = DB_URL
+
     context.configure(
-        url=url,
+        url=DB_URL,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},

@@ -1,6 +1,5 @@
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import ReplyKeyboardMarkup
 
 from handlers.services.keyboards import currency_keyboard, menu_keyboard, answer_keyboard
 from loader import dp

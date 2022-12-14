@@ -2,12 +2,16 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 
 
 class HandlersMessages(StatesGroup):
-    """register states"""
+    # register states
     name_add = State()
     currency_add = State()
     overwrite = State()
     auto_redirect = State()
-    """purchase_states"""
+
+    # menu states
+    menu_select = State()
+    action = State()
+
     new_buy = State()
     add_title = State()
     add_price = State()
@@ -16,6 +20,3 @@ class HandlersMessages(StatesGroup):
     create_category = State()
     create_store = State()
     check_purchase_data = State()
-    """menu_states"""
-    menu_select = State()
-    action = State()

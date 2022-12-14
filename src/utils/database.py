@@ -11,8 +11,6 @@ Base = declarative_base()
 engine = create_engine(DB_URL)
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
-
 
 class User(Base):
     __tablename__ = "users"

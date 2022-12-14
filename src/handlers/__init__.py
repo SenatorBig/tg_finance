@@ -1,7 +1,5 @@
-from .start import dp
-from .register import dp
-from .help import dp
-from .purchase import dp
-from .menu import dp
-
-__all__ = ["dp"]
+from . import start
+from . import register
+from . import help
+from . import purchase
+from . import menu
