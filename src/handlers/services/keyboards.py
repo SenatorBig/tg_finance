@@ -1,5 +1,5 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-import sting_vars
+from . import sting_vars
 
 
 def stores_keyboard(stores):

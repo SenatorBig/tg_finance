@@ -1,6 +1,6 @@
 from handlers.services.general_states import HandlersMessages
 from loader import dp
-from services import sting_vars
+from handlers.services import sting_vars
 
 from aiogram import types
 
