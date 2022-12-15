@@ -2,7 +2,7 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 from loader import dp
-from utils.database import Purchase, Category, Store
+from utils.database import Purchase, Category, Store, CategoryStores
 from handlers.services.general_states import HandlersMessages
 from handlers.services.keyboards import stores_keyboard, categories_keyboard, menu_keyboard
 from handlers.services.decorators import inject_user_and_session
@@ -46,11 +46,13 @@ async def select_category_purchase(message: types.Message, session, user, state:
         await message.answer("Enter the title of new category")
         await HandlersMessages.create_category.set()
     else:
-        stores = session.query(Store).filter_by(user_id=user.id)
-        categories = session.query(Category).filter_by(user_id=user.id)
-        if message.text not in [category.title for category in categories]:
+        category = session.query(Category).filter_by(title=message.text).first()
+        if category is None:
             await message.answer("Please, select category from keyboard")
             return
+        category_store = session.query(CategoryStores).filter_by(category_id=category.id)
+        stores_id = [store_id.store_id for store_id in category_store]
+        stores = session.query(Store).filter(Store.id.in_(stores_id))
         await message.answer(
             "Select a store or create a new one",
             reply_markup=stores_keyboard(stores)
@@ -64,7 +66,8 @@ async def select_category_purchase(message: types.Message, session, user, state:
 async def create_new_category(message: types.Message, session, user, state: FSMContext):
     category = Category(title=message.text, user_id=user.id)
     session.add(category)
-    stores = session.query(Store).filter_by(user_id=user.id)
+    session.commit()
+    stores = []
     await message.answer(
         "Select a store or create a new one",
         reply_markup=stores_keyboard(stores)
@@ -84,7 +87,7 @@ async def add_store(message: types.Message, session, user, state: FSMContext):
         if message.text not in [store.title for store in stores]:
             await message.answer("Please, select store from keyboard")
             return
-        await state.update_data(store=message.text, new_store=False)
+        await state.update_data(store=message.text)
         data = await state.get_data()
         store = session.query(Store).filter_by(user_id=user.id, title=data["store"]).first()
         category = session.query(Category).filter_by(user_id=user.id, title=data["category"]).first()
@@ -95,6 +98,7 @@ async def add_store(message: types.Message, session, user, state: FSMContext):
         text = f"Title: {data['title']} \nPrice: {data['price']} \nCategory: {data['category']} \nStore: {data['store']}"
         await message.answer(text)
         await message.answer("What do you want?", reply_markup=menu_keyboard)
+        await state.finish()
         await HandlersMessages.menu_select.set()
 
 
@@ -103,15 +107,28 @@ async def add_store(message: types.Message, session, user, state: FSMContext):
 async def create_new_store(message: types.Message, session, user, state: FSMContext):
     await state.update_data(store=message.text, new_store=True)
     data = await state.get_data()
-    store = Store(title=message.text, user_id=user.id)
-    session.add(store)
-    session.commit()
-    store_id = store.id
+    all_stores = session.query(Store).filter_by(user_id=user.id)
+    store_exist = None
+    for store in all_stores:
+        if message.text.lower() == store.title.lower():
+            store_exist = store
+            break
+    if store_exist is None:
+        store = Store(title=message.text, user_id=user.id)
+        session.add(store)
+        session.commit()
     category = session.query(Category).filter_by(user_id=user.id, title=data["category"]).first()
-    purchase = Purchase(title=data["title"], price=data["price"], category_id=category.id, store_id=store_id)
+    category_store = CategoryStores(store_id=store.id, category_id=category.id)
+    purchase = Purchase(
+        title=data["title"], price=data["price"], category_id=category.id, store_id=store.id, user_id=user.id
+                        )
+    store_category = CategoryStores(store_id=store.id, category_id=category.id)
     session.add(purchase)
+    session.add(store_category)
+    session.add(category_store)
     session.commit()
     text = f"Title: {data['title']} \nPrice: {data['price']} \nCategory: {data['category']} \nStore: {data['store']}"
     await message.answer(text)
     await message.answer("What do you want?", reply_markup=menu_keyboard)
+    await state.finish()
     await HandlersMessages.menu_select.set()

@@ -1,6 +1,6 @@
 from aiogram import Bot, Dispatcher
 
-from aiogram.contrib.fsm_storage.redis import RedisStorage2
+# from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from data.config import API_TOKEN, DB_URL
 from sqlalchemy import create_engine

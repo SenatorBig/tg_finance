@@ -12,6 +12,7 @@ class HandlersMessages(StatesGroup):
     menu_select = State()
     action = State()
 
+    # purchase states
     new_buy = State()
     add_title = State()
     add_price = State()
@@ -20,3 +21,9 @@ class HandlersMessages(StatesGroup):
     create_category = State()
     create_store = State()
     check_purchase_data = State()
+
+    # categories states
+    categories_menu = State()
+    new_category = State()
+    add_store_to_category = State()
+

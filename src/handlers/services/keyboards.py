@@ -25,6 +25,7 @@ menu_keyboard = ReplyKeyboardMarkup(
         [
             KeyboardButton(text=sting_vars.menu_analysis),
             KeyboardButton(text=sting_vars.menu_purchase),
+            KeyboardButton(text=sting_vars.menu_categories)
         ],
     ],
     resize_keyboard=True,
@@ -52,4 +53,14 @@ currency_keyboard = ReplyKeyboardMarkup(
     ],
     resize_keyboard=True,
     one_time_keyboard=True
+)
+
+categories_menu_keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(text=sting_vars.category_menu_create),
+                KeyboardButton(text=sting_vars.category_menu_delete),
+                KeyboardButton(text=sting_vars.category_menu_store)
+            ]
+        ]
 )

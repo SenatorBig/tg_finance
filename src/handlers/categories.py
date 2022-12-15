@@ -7,11 +7,10 @@ from aiogram import types
 
 @dp.message_handler(state=HandlersMessages.menu_select)
 async def call_menu(message: types.Message):
-    if message.text == sting_vars.menu_purchase:
-        await message.answer("Enter the product name")
+    if message.text == sting_vars.category_menu_create:
+        await message.answer("Enter the category name")
         await HandlersMessages.add_title.set()
     if message.text == sting_vars.menu_analysis:
-        await message.answer("link to site")
-        await message.answer("What do you want?", reply_markup=kb.menu_keyboard)
-    if message.text == sting_vars.menu_categories:
-        await message.answer("Categories settings", reply_markup=kb.categories_menu_keyboard)
+        await message.answer("Select category to delete")
+    if message.text == sting_vars.category_menu_store:
+        await message.answer("Select category to add store")

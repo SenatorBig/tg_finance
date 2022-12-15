@@ -16,7 +16,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
+    name = Column(String(length=50))
     chat_id = Column(String, unique=True)
     currency = Column(String)
     balance = Column(Float)
@@ -30,7 +30,7 @@ class Purchase(Base):
     __tablename__ = "purchases"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String)
+    title = Column(String(length=100))
     user_id = Column(Integer, ForeignKey("users.id"))
     price = Column(Float)
     created_at = Column(DateTime, default=datetime.now)
@@ -42,7 +42,7 @@ class Store(Base):
     __tablename__ = "stores"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String)
+    title = Column(String(length=50))
     purchase = relationship("Purchase")
     user_id = Column(Integer, ForeignKey("users.id"))
 
@@ -51,7 +51,14 @@ class Category(Base):
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String)
+    title = Column(String(length=50))
     purchase = relationship("Purchase")
     user_id = Column(Integer, ForeignKey("users.id"))
 
+
+class CategoryStores(Base):
+    __tablename__ = "category_stores"
+
+    id = Column(Integer, primary_key=True, index=True)
+    category_id = Column(Integer, ForeignKey("categories.id"))
+    store_id = Column(Integer, ForeignKey("stores.id"))
